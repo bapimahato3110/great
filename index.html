@@ -2,99 +2,132 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>R.O.T.A</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+  <style>
+    body {
+      font-family: 'Frutiger 45', sans-serif;
+      padding: rem;
+    }
+
+    .rota-title {
+      text-align: center;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+
+    .rota-title .rota {
+      font-size: 3.5rem;
+    }
+
+    .rota-title .rest {
+      font-size: 1.5rem;
+    }
+
+    .section {
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    textarea {
+      font-family: monospace;
+    }
+
+    table {
+      margin-top: 2rem;
+    }
+  </style>
 </head>
-<body class="container my-4">
+<body>
+  <div class="container">
+    <div class="rota-title mb-5">
+      <div><span class="rota">R.O.T.A</span></div>
+      <div class="rest">Release.Orientation.for.Transition.Automated.</div>
+    </div>
 
-  <!-- Heading -->
-  <div class="text-center mb-4">
-    <h1 class="rota-heading">
-      <span style="font-size: 70%;">R.O.T.A</span><br>
-      <span style="font-size: 30%;">Release.Orientation.for.Transition.Automated.</span>
-    </h1>
-  </div>
-
-  <!-- Section A: Lazy Rex -->
-  <div class="section">
-    <h5>Lazy Rex</h5>
-    <div class="form-grid">
-      <div>
-        <label class="input-label">Ansible Package Name</label>
-        <input type="text" class="form-control input-field" data-label="ansible package name" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Virtual Env</label>
-        <input type="text" class="form-control input-field" data-label="virtual env" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Source Inventory</label>
-        <input type="text" class="form-control input-field" data-label="source inventory" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Verbosity</label>
-        <input type="text" class="form-control input-field" data-label="verbosity" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Playbook Processing Type</label>
-        <input type="text" class="form-control input-field" data-label="playbook processing type" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Template</label>
-        <input type="text" class="form-control input-field" data-label="template" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Order Type</label>
-        <input type="text" class="form-control input-field" data-label="order type" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Software IDs</label>
-        <input type="text" class="form-control input-field" data-label="software ids" value="m4nansible">
-      </div>
-      <div>
-        <label class="input-label">Email</label>
-        <input type="email" class="form-control input-field" data-label="email" value="m4nansible">
+    <!-- Section A -->
+    <div class="section">
+      <h5>Section A: Generic Fields</h5>
+      <div class="row">
+        <div class="col-md-6 mb-3"><label>Ansible Package Name</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Virtual Env</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Source Inventory</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Verbosity</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Playbook Processing Type</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Template</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Order Type</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Software IDs</label><input class="form-control" value="m4nansible" /></div>
+        <div class="col-md-6 mb-3"><label>Email</label><input class="form-control" value="m4nansible" /></div>
       </div>
     </div>
-  </div>
 
-  <!-- Section B: Manage Use Cases -->
-  <div class="section">
-    <h5>Manage Use Cases</h5>
-    <div id="use-case-container"></div>
-    <button class="btn btn-success mt-3" onclick="addUseCaseRow()">Add Use Case</button>
-    <button class="btn btn-primary mt-3" onclick="createROTA()">Create ROTA</button>
-  </div>
+    <!-- Section B -->
+    <div class="section">
+      <div class="mb-3"><label>Playbook Version</label><input class="form-control" id="version" /></div>
+      <div class="mb-3"><label>RFC</label><input class="form-control" id="rfc" /></div>
+      <div class="mb-3"><label>Use Cases</label>
+        <textarea class="form-control" id="useCases" rows="6" placeholder="e.g.\ndeploy|tag1\n#verify"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="generateTable()">Create ROTA</button>
+    </div>
 
-  <!-- ROTA Table Section -->
-  <div class="section">
-    <h5>ROTA Table</h5>
-    <table class="table table-bordered" id="rota-table">
-      <thead class="table-light">
+    <table class="table table-bordered mt-4" id="rotaTable" style="display:none">
+      <thead class="thead-dark">
         <tr>
           <th>Serial No</th>
-          <th>Task</th>
-          <th>Task Description</th>
-          <th>Actor</th>
-          <th>When</th>
-          <th>Notes</th>
-          <th>PREPROD</th>
-          <th>Status</th>
-          <th>Comments</th>
+          <th>Use Case</th>
+          <th>Tag</th>
+          <th>P0</th>
+          <th>R0</th>
+          <th>IT4</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Rows will be dynamically added here -->
-      </tbody>
+      <tbody></tbody>
     </table>
   </div>
 
-  <!-- Bootstrap JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Custom JS -->
-  <script src="script.js"></script>
+  <script>
+    function generateTable() {
+      const useCasesText = document.getElementById("useCases").value.trim();
+      const rows = useCasesText.split("\n").filter(line => line.trim() !== "");
+      const tbody = document.querySelector("#rotaTable tbody");
+      tbody.innerHTML = "";
+      let serial = 1;
+
+      rows.forEach(line => {
+        const isHash = line.trim().startsWith("#");
+        let useCase = "", tag = "", p0 = "", r0 = "", it4 = "";
+
+        if (isHash) {
+          useCase = line.trim().replace(/^#/, "");
+        } else {
+          const parts = line.split("|");
+          useCase = parts[0].trim();
+          tag = parts[1] ? parts[1].trim() : "";
+
+          const baseUrl = "https://example.com/deploy?";
+          p0 = `${baseUrl}env=p0&tag=${tag}&uc=${useCase}`;
+          r0 = `${baseUrl}env=r0&tag=${tag}&uc=${useCase}`;
+          it4 = `${baseUrl}env=it4&tag=${tag}&uc=${useCase}`;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${serial++}</td>
+          <td>${useCase}</td>
+          <td>${isHash ? "" : tag}</td>
+          <td>${isHash ? "" : `<a href='${p0}' target='_blank'>${p0}</a>`}</td>
+          <td>${isHash ? "" : `<a href='${r0}' target='_blank'>${r0}</a>`}</td>
+          <td>${isHash ? "" : `<a href='${it4}' target='_blank'>${it4}</a>`}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("rotaTable").style.display = "table";
+    }
+  </script>
 </body>
 </html>
