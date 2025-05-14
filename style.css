@@ -1,0 +1,24 @@
+body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: bold;
+  }
+  
+  .rota-header {
+    font-weight: bold;
+    font-size: 2rem;
+  }
+  
+  .rota-acronym {
+    font-size: 2em;
+    vertical-align: middle;
+  }
+  
+  .rota-text {
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+  
+  .input-field {
+    font-family: inherit;
+  }
+  
