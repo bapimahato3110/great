@@ -1,24 +1,35 @@
 body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    font-weight: bold;
+    font-family: 'Frutiger', sans-serif;
   }
   
-  .rota-header {
-    font-weight: bold;
+  .rota-heading {
     font-size: 2rem;
+    font-weight: bold;
   }
   
-  .rota-acronym {
-    font-size: 2em;
-    vertical-align: middle;
+  .input-label {
+    font-weight: bold;
   }
   
-  .rota-text {
-    font-size: 0.6em;
-    vertical-align: middle;
+  .section {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin-bottom: 2rem;
   }
   
-  .input-field {
-    font-family: inherit;
+  .section h5 {
+    margin-bottom: 1rem;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .url-display {
+    font-size: 0.9rem;
+    color: #555;
+    word-break: break-word;
   }
   
