@@ -146,45 +146,120 @@ public class EcoCodeApp extends Application {
 
 -- css--
 
+/* Main Application Styles */
 .root {
-    -fx-font-family: 'Frutiger 45';
-    -fx-background-color: #f8f8f8;
+    -fx-background-color: #f5f5f5;
+    -fx-font-family: 'Arial';
 }
 
+/* Header Styles */
+.header-box {
+    -fx-alignment: center;
+    -fx-padding: 20px;
+}
+
+.title-box {
+    -fx-spacing: 5px;
+    -fx-alignment: center;
+}
+
+.eco-text {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-fill: #ff0000; /* Red */
+}
+
+.code-text {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-fill: #000000; /* Black */
+}
+
+/* Blinking Caption */
+.caption {
+    -fx-font-size: 16px;
+    -fx-text-fill: #000000;
+    -fx-cursor: hand;
+}
+
+/* Tab Pane */
+.tab-pane {
+    -fx-tab-min-width: 120px;
+    -fx-tab-max-width: 120px;
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 5px 5px 0px 0px;
+    -fx-padding: 8px 15px;
+}
+
+.tab:selected {
+    -fx-background-color: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.tab-label {
+    -fx-text-fill: #2E7D32; /* Dark green */
+}
+
+/* Scan Tab Content */
+.scan-content {
+    -fx-padding: 20px;
+    -fx-spacing: 20px;
+    -fx-alignment: top-center;
+}
+
+.directory-box {
+    -fx-spacing: 10px;
+    -fx-alignment: center;
+}
+
+.text-field {
+    -fx-pref-width: 400px;
+    -fx-padding: 8px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-border-color: #bdbdbd;
+}
+
+/* Buttons */
 .button {
-    -fx-font-family: 'Frutiger 45';
     -fx-background-radius: 4px;
     -fx-padding: 8px 16px;
     -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.browse-button {
+    -fx-background-color: #4CAF50; /* Light green */
+    -fx-text-fill: white;
+}
+
+.scan-button {
+    -fx-background-color: #2E7D32; /* Dark green */
+    -fx-text-fill: white;
 }
 
 .button:hover {
     -fx-opacity: 0.9;
 }
 
-.text-field {
-    -fx-font-family: 'Frutiger 45';
-    -fx-background-radius: 4px;
-    -fx-border-radius: 4px;
-    -fx-border-color: #e0e0e0;
-    -fx-padding: 8px;
+/* Reports Tab */
+.reports-content {
+    -fx-padding: 20px;
+    -fx-spacing: 15px;
 }
 
-.chart-title {
-    -fx-font-family: 'Frutiger 45';
-    -fx-font-size: 16px;
-    -fx-text-fill: #2e7d32;
+.reports-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32;
 }
 
-.chart-legend-item {
-    -fx-font-family: 'Frutiger 45';
-    -fx-font-size: 14px;
+/* Config Tab */
+.config-content {
+    -fx-padding: 20px;
+    -fx-alignment: center;
 }
-
-.pie-chart-legend {
-    -fx-font-family: 'Frutiger 45';
-}
-
-.data0.chart-pie { -fx-pie-color: #4caf50; }
-.data1.chart-pie { -fx-pie-color: #ffc107; }
-.data2.chart-pie { -fx-pie-color: #f44336; }
