@@ -8,7 +8,11 @@ import java.util.regex.*;
 public class RolesAccessScanner {
 
     // Patterns
-    private static final Pattern HTML_ACCESS = Pattern.compile("(\\*access|\\[access\\])\\s*=\\s*['\"]([^'\"]+)['\"]");
+    private static final Pattern HTML_ACCESS = Pattern.compile(
+        "<(\\w[\\w-]*)\\s+[^>]*?(\\*access|\\[access\\])\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>(.*?)</\\1>",
+        Pattern.DOTALL | Pattern.CASE_INSENSITIVE
+);
+
     private static final Pattern ROLE_VAR = Pattern.compile("\\b(allowedRolesToEdit|allowedRoles|ALLOWED_ROLES)\\s*=\\s*\\[([^\\]]+)\\]");
     private static final Pattern HAS_ROLE = Pattern.compile("visibilityService\\.hasRole\\s*\\(\\s*\\[?([^\\]\\)]+)\\]?");
 
