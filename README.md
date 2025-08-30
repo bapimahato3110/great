@@ -8,11 +8,11 @@ import java.util.stream.Stream;
 
 public class RolesAccessScanner {
 
-    // Patterns
+    // Patterns ipdated
     private static final Pattern HTML_ACCESS = Pattern.compile(
-            "<(\\w[\\w-]*)\\s+[^>]*?(\\*access|\\[access\\])\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>(.*?)</\\1>",
-            Pattern.DOTALL | Pattern.CASE_INSENSITIVE
-    );
+        "<(\\w[\\w-]*)\\s+[^>]*?(\\*access|\\[access\\])\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>(.*?)</\\1>",
+        Pattern.DOTALL | Pattern.CASE_INSENSITIVE
+);
 
     private static final Pattern ROLE_VAR = Pattern.compile(
             "\\b(allowedRolesToEdit|allowedRoles|ALLOWED_ROLES)\\s*=\\s*\\[([^\\]]+)\\]"
