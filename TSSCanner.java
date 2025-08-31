@@ -41,61 +41,26 @@ public class TSRolesScanner {
         }
 
         // Print results for testing
+        System.out.println("File\tAssignedTo\tRoles");
         for (Result r : results) {
-            System.out.println("File: " + r.file);
-            System.out.println("AssignedTo: " + r.assignedTo);
-            System.out.println("Roles: " + r.roles);
-            System.out.println("------------------------");
+            System.out.println(r.fileName() + "\t" + r.assignedTo() + "\t" + r.roles());
         }
     }
 
     private static void processFile(Path file, List<Result> results) {
         try {
             String content = Files.readString(file, StandardCharsets.UTF_8);
+            String fileName = file.getFileName().toString(); // only file name, not full path
 
-            scanAssignmentEquals(file.toString(), content, results);
-            scanAssignmentObject(file.toString(), content, results);
-            scanMethodCall(file.toString(), content, results);
+            scanAssignmentEquals(fileName, content, results);
+            scanAssignmentObject(fileName, content, results);
+            scanMethodCall(fileName, content, results);
 
         } catch (IOException e) {
             System.err.println("Error reading file: " + file + " -> " + e.getMessage());
         }
     }
 
-    private static void scanAssignmentEquals(String filePath, String content, List<Result> results) {
+    private static void scanAssignmentEquals(String fileName, String content, List<Result> results) {
         Matcher m = ASSIGNMENT_EQUALS.matcher(content);
-        while (m.find()) {
-            String assignedTo = m.group(1).trim();
-            String roles = m.group(2).trim();
-            results.add(new Result(filePath, assignedTo, roles));
-        }
-    }
-
-    private static void scanAssignmentObject(String filePath, String content, List<Result> results) {
-        Matcher m = ASSIGNMENT_OBJECT.matcher(content);
-        while (m.find()) {
-            String assignedTo = m.group(1).trim();
-            String body = m.group(2).trim();
-            // extract roles line inside body
-            Pattern rolesLine = Pattern.compile(".*(ROLE_MBAA.*?);", Pattern.DOTALL);
-            Matcher rm = rolesLine.matcher(body);
-            String roles = "";
-            if (rm.find()) {
-                roles = rm.group(1).trim();
-            }
-            results.add(new Result(filePath, assignedTo, roles));
-        }
-    }
-
-    private static void scanMethodCall(String filePath, String content, List<Result> results) {
-        Matcher m = METHOD_CALL.matcher(content);
-        while (m.find()) {
-            String assignedTo = m.group(1).trim();
-            String roles = m.group(2).trim();
-            results.add(new Result(filePath, assignedTo, roles));
-        }
-    }
-
-    // Simple record to hold results
-    private record Result(String file, String assignedTo, String roles) {}
-}
+        while
