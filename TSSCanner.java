@@ -63,4 +63,39 @@ public class TSRolesScanner {
 
     private static void scanAssignmentEquals(String fileName, String content, List<Result> results) {
         Matcher m = ASSIGNMENT_EQUALS.matcher(content);
-        while
+        while (m.find()) {
+            String assignedTo = m.group(1).trim();
+            String roles = m.group(2).trim();
+            results.add(new Result(fileName, assignedTo, roles));
+        }
+    }
+
+    private static void scanAssignmentObject(String fileName, String content, List<Result> results) {
+        Matcher m = ASSIGNMENT_OBJECT.matcher(content);
+        while (m.find()) {
+            String assignedTo = m.group(1).trim();
+            String body = m.group(2).trim();
+
+            // extract the line containing ROLE_MBAA inside the object literal
+            Pattern rolesLine = Pattern.compile(".*(ROLE_MBAA.*?);", Pattern.DOTALL);
+            Matcher rm = rolesLine.matcher(body);
+            String roles = "";
+            if (rm.find()) {
+                roles = rm.group(1).trim();
+            }
+            results.add(new Result(fileName, assignedTo, roles));
+        }
+    }
+
+    private static void scanMethodCall(String fileName, String content, List<Result> results) {
+        Matcher m = METHOD_CALL.matcher(content);
+        while (m.find()) {
+            String assignedTo = m.group(1).trim();
+            String roles = m.group(2).trim();
+            results.add(new Result(fileName, assignedTo, roles));
+        }
+    }
+
+    // Simple record to hold results
+    private record Result(String fileName, String assignedTo, String roles) {}
+}
