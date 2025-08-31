@@ -6,9 +6,18 @@ private static List<Result> scanNavMenuConfigs(Path baseDir) throws IOException 
             .filter(f -> f.getFileName().toString().endsWith("config.ts"))
             .collect(Collectors.toList());
 
-    Pattern objectPattern = Pattern.compile("(\\w+)\\s*:\\s*\\{([^}]*rolesAllowed\\s*:\\s*\\[[^}]+])[^}]*}", Pattern.DOTALL);
-    Pattern titlePattern = Pattern.compile("title\\s*:\\s*\"([^\"]+)\"");
-    Pattern rolesPattern = Pattern.compile("rolesAllowed\\s*:\\s*(\\[[^\\]]+])");
+   // Match object blocks containing rolesAllowed
+Pattern objectPattern = Pattern.compile(
+    "(\\w+)\\s*:\\s*\\{([^}]*rolesAllowed\\s*:\\s*\\[[^}]+])[^}]*\\}", 
+    Pattern.DOTALL
+);
+
+// Extract title (supports single or double quotes)
+Pattern titlePattern = Pattern.compile("title\\s*:\\s*['\"]([^'\"]+)['\"]");
+
+// Extract rolesAllowed (supports single or double quotes inside array)
+Pattern rolesPattern = Pattern.compile("rolesAllowed\\s*:\\s*(\\[[^\\]]+\\])");
+
 
     for (Path file : configFiles) {
         String content = Files.readString(file);
