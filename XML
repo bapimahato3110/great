@@ -1,0 +1,35 @@
+private static List<Result> scanXmlFiles(Path root) throws IOException {
+    List<Result> results = new ArrayList<>();
+
+    Files.walk(root)
+         .filter(p -> p.toString().endsWith(".xml"))
+         .forEach(file -> {
+             try {
+                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                 factory.setNamespaceAware(true); // allow prefixes like sec-mbaa
+                 DocumentBuilder builder = factory.newDocumentBuilder();
+                 Document doc = builder.parse(file.toFile());
+
+                 NodeList roles = doc.getElementsByTagName("sec-mbaa:role");
+                 for (int i = 0; i < roles.getLength(); i++) {
+                     Element roleElem = (Element) roles.item(i);
+
+                     String action = roleElem.getAttribute("Action");
+                     String dataSets = roleElem.getAttribute("DataSets");
+                     String role = roleElem.getAttribute("Roles");
+
+                     results.add(new Result(
+                         file.getFileName().toString(), // just filename
+                         action,                         // assignedTo
+                         role,                           // roles
+                         dataSets                        // fullObject → DataSets
+                     ));
+                 }
+
+             } catch (Exception e) {
+                 System.err.println("Error parsing XML file " + file + ": " + e.getMessage());
+             }
+         });
+
+    return results;
+}
