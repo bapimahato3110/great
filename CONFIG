@@ -1,0 +1,139 @@
+private static List<Result> scanNavMenuConfigs(Path baseDir) throws IOException {
+    List<Result> results = new ArrayList<>();
+
+    List<Path> configFiles = Files.walk(baseDir)
+            .filter(Files::isRegularFile)
+            .filter(f -> f.getFileName().toString().endsWith("config.ts"))
+            .collect(Collectors.toList());
+
+    Pattern objectPattern = Pattern.compile("(\\w+)\\s*:\\s*\\{([^}]*rolesAllowed\\s*:\\s*\\[[^}]+])[^}]*}", Pattern.DOTALL);
+    Pattern titlePattern = Pattern.compile("title\\s*:\\s*\"([^\"]+)\"");
+    Pattern rolesPattern = Pattern.compile("rolesAllowed\\s*:\\s*(\\[[^\\]]+])");
+
+    for (Path file : configFiles) {
+        String content = Files.readString(file);
+
+        Matcher objectMatcher = objectPattern.matcher(content);
+        while (objectMatcher.find()) {
+            String objectBlock = objectMatcher.group(2);
+
+            // Extract title
+            String title = "N/A";
+            Matcher titleMatcher = titlePattern.matcher(objectBlock);
+            if (titleMatcher.find()) {
+                title = titleMatcher.group(1);
+            }
+
+            // Extract roles
+            String roles = "N/A";
+            Matcher rolesMatcher = rolesPattern.matcher(objectBlock);
+            if (rolesMatcher.find()) {
+                roles = rolesMatcher.group(1);
+            }
+
+            results.add(new Result(
+                    file.getFileName().toString(),
+                    title,
+                    roles,
+                    "NA"
+            ));
+        }
+    }
+
+    return results;
+}
+/////// HTML
+private static void writeHtmlReport(
+        List<Result> componentResults,
+        List<Result> routeResults,
+        List<Result> navMenuResults
+) throws IOException {
+
+    String targetDir = System.getProperty("user.dir") + "/target";
+    Files.createDirectories(Paths.get(targetDir));
+    Path reportPath = Paths.get(targetDir, "rbac-scan-report.html");
+
+    StringBuilder html = new StringBuilder();
+    html.append("<!DOCTYPE html><html><head><meta charset='UTF-8'>")
+        .append("<title>RBAC Scan Report</title>")
+        .append("<style>")
+        .append("body { font-family: Arial, sans-serif; }")
+        .append(".tabs { display: flex; cursor: pointer; margin-bottom: 10px; }")
+        .append(".tab { padding: 10px; border: 1px solid #ccc; margin-right: 5px; border-radius: 5px 5px 0 0; }")
+        .append(".tab.active { background: #eee; font-weight: bold; }")
+        .append(".tab-content { display: none; }")
+        .append(".tab-content.active { display: block; }")
+        .append("table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }")
+        .append("th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }")
+        .append("tr:nth-child(even) { background-color: #f9f9f9; }")
+        .append("tr:hover { background-color: #f1f1f1; }")
+        .append("</style>")
+        .append("<script>")
+        .append("function showTab(idx) {")
+        .append("document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===idx));")
+        .append("document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===idx));")
+        .append("}")
+        .append("</script>")
+        .append("</head><body>");
+
+    // Tabs header
+    html.append("<div class='tabs'>")
+        .append("<div class='tab active' onclick='showTab(0)'>Component TS Files</div>")
+        .append("<div class='tab' onclick='showTab(1)'>Route Files</div>")
+        .append("<div class='tab' onclick='showTab(2)'>Nav Menu Config</div>")
+        .append("</div>");
+
+    // Tab 1: Component Results
+    html.append("<div class='tab-content active'><h2>Component TS Files</h2><table>")
+        .append("<tr><th>#</th><th>File</th><th>Assigned To</th><th>Roles</th><th>Full Object</th></tr>");
+    int i = 1;
+    for (Result r : componentResults) {
+        html.append("<tr>")
+            .append("<td>").append(i++).append("</td>")
+            .append("<td>").append(r.file()).append("</td>")
+            .append("<td>").append(r.assignedTo()).append("</td>")
+            .append("<td>").append(r.roles()).append("</td>")
+            .append("<td>").append(r.fullObject()).append("</td>")
+            .append("</tr>");
+    }
+    html.append("</table></div>");
+
+    // Tab 2: Route Results
+    html.append("<div class='tab-content'><h2>Route Files</h2><table>")
+        .append("<tr><th>#</th><th>File</th><th>Assigned To</th><th>Roles</th><th>Full Object</th></tr>");
+    i = 1;
+    for (Result r : routeResults) {
+        html.append("<tr>")
+            .append("<td>").append(i++).append("</td>")
+            .append("<td>").append(r.file()).append("</td>")
+            .append("<td>").append(r.assignedTo()).append("</td>")
+            .append("<td>").append(r.roles()).append("</td>")
+            .append("<td>").append(r.fullObject()).append("</td>")
+            .append("</tr>");
+    }
+    html.append("</table></div>");
+
+    // Tab 3: Nav Menu Config Results
+    html.append("<div class='tab-content'><h2>Nav Menu Config</h2><table>")
+        .append("<tr><th>#</th><th>File</th><th>Assigned To</th><th>Roles</th><th>Full Object</th></tr>");
+    i = 1;
+    for (Result r : navMenuResults) {
+        html.append("<tr>")
+            .append("<td>").append(i++).append("</td>")
+            .append("<td>").append(r.file()).append("</td>")
+            .append("<td>").append(r.assignedTo()).append("</td>")
+            .append("<td>").append(r.roles()).append("</td>")
+            .append("<td>").append(r.fullObject()).append("</td>")
+            .append("</tr>");
+    }
+    html.append("</table></div>");
+
+    html.append("</body></html>");
+    Files.writeString(reportPath, html.toString());
+    System.out.println("HTML Report written to " + reportPath.toAbsolutePath());
+}
+
+
+
+
+////
