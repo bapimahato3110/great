@@ -71,20 +71,51 @@ public class TSRolesScanner {
     }
 
     private static void scanAssignmentObject(String fileName, String content, List<Result> results) {
-        Matcher m = ASSIGNMENT_OBJECT.matcher(content);
-        while (m.find()) {
-            String assignedTo = m.group(1).trim();
-            String body = m.group(2).trim();
+        private List<Result> scanAssignmentObject(Path tsFile) {
+    List<Result> results = new ArrayList<>();
+    Pattern OBJECT_START = Pattern.compile("^(\\w+)\\s*=\\s*\\{");  // e.g. addOnRefinedListConfig = {
+    Pattern ROLES_IN_OBJECT = Pattern.compile("[:=]\\s*\\[(.*?)]"); // matches [ 'ROLE_MBAA.ADMIN' , ... ]
 
-            // extract the line containing ROLE_MBAA inside the object literal
-            Pattern rolesLine = Pattern.compile(".*(ROLE_MBAA.*?);", Pattern.DOTALL);
-            Matcher rm = rolesLine.matcher(body);
-            String roles = "";
-            if (rm.find()) {
-                roles = rm.group(1).trim();
+    try {
+        List<String> lines = Files.readAllLines(tsFile);
+        String currentObject = null;
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+
+            // Detect start of object assignment
+            Matcher start = OBJECT_START.matcher(trimmed);
+            if (start.find()) {
+                currentObject = start.group(1); // object name
+                continue;
             }
-            results.add(new Result(fileName, assignedTo, roles));
+
+            // Detect end of object assignment
+            if (currentObject != null && trimmed.startsWith("}")) {
+                currentObject = null;
+                continue;
+            }
+
+            // If inside object, look for roles
+            if (currentObject != null) {
+                Matcher roles = ROLES_IN_OBJECT.matcher(trimmed);
+                if (roles.find() && roles.group(1).contains("ROLE_MBAA")) {
+                    results.add(new Result(
+                            tsFile.getFileName().toString(), // just file name
+                            "Object Assignment (:)",        // type
+                            currentObject,                  // assignedTo
+                            "[" + roles.group(1).trim() + "]" // roles
+                    ));
+                }
+            }
         }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+    return results;
+}
+
     }
 
     private static void scanMethodCall(String fileName, String content, List<Result> results) {
