@@ -1,3 +1,10 @@
+// matches: left side = [ ...ROLE_MBAA... ]
+Pattern ASSIGNMENT_EQUALS = Pattern.compile(
+        "(.*?)=\\s*\\[(.*?ROLE_MBAA.*?)\\]",
+        Pattern.DOTALL
+);
+
+
 private List<Result> scanAssignmentEquals(Path tsFile) {
     List<Result> results = new ArrayList<>();
     Pattern ASSIGNMENT_EQUALS = Pattern.compile(
