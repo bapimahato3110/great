@@ -13,10 +13,10 @@ public class RolesAccessScanner {
 
     // HTML pattern to capture normal tags with closing or self-closing tags
     private static final Pattern HTML_ACCESS = Pattern.compile(
-            "<(\\w[\\w-]*)[^>]*?(?:\\*access|\\[access\\])\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>([\\s\\S]*?)</\\1>|" +
-            "<(\\w[\\w-]*)[^>]*?(?:\\*access|\\[access\\])\\s*=\\s*['\"]([^'\"]+)['\"][^>]*/>",
-            Pattern.CASE_INSENSITIVE
-    );
+        "<(\\w[\\w-]*)[^>]*?(?:\\*access|\\[access\\])\\s*=\\s*\"([^\"]+)\"[^>]*>([\\s\\S]*?)</\\1>|" +
+        "<(\\w[\\w-]*)[^>]*?(?:\\*access|\\[access\\])\\s*=\\s*\"([^\"]+)\"[^>]*/>",
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+);
 
     // TS patterns for role variables
     private static final List<Pattern> TS_ROLE_PATTERNS = List.of(
