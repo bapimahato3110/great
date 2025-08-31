@@ -1,0 +1,50 @@
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+private static List<Result> scanHtmlFiles(Path baseDir) throws IOException {
+    List<Result> results = new ArrayList<>();
+
+    List<Path> htmlFiles = Files.walk(baseDir)
+            .filter(Files::isRegularFile)
+            .filter(f -> f.toString().endsWith(".html"))
+            .collect(Collectors.toList());
+
+    for (Path file : htmlFiles) {
+        Document doc = Jsoup.parse(file.toFile(), "UTF-8");
+
+        // Find all elements with *access attribute
+        Elements roots = doc.select("*[\\*access]");
+
+        for (Element root : roots) {
+            String assignedTo = "<" + root.tagName() + ">";
+            String roles = root.attr("*access");
+
+            // Build fullObject: all child tags and their inner text
+            StringBuilder fullObject = new StringBuilder();
+            appendChildElements(root, fullObject, 1);
+
+            results.add(new Result(
+                    file.getFileName().toString(),
+                    assignedTo,
+                    roles,
+                    fullObject.toString()
+            ));
+        }
+    }
+
+    return results;
+}
+
+// Recursive helper to get child elements
+private static void appendChildElements(Element parent, StringBuilder sb, int level) {
+    for (Element child : parent.children()) {
+        sb.append("  ".repeat(level)) // indentation
+          .append(child.tagName())
+          .append(" - ")
+          .append(child.text().trim())
+          .append("\n");
+        appendChildElements(child, sb, level + 1);
+    }
+}
