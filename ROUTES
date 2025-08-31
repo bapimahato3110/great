@@ -1,0 +1,34 @@
+// Capture route blocks with rolesAllowed
+Pattern routePattern = Pattern.compile(
+    "component\\s*:\\s*(\\w+)\\s*,[\\s\\S]*?rolesAllowed\\s*:\\s*(\\[[^]]*\\])",
+    Pattern.MULTILINE
+);
+
+private static List<Result> scanRoutesFile(Path file) {
+    List<Result> results = new ArrayList<>();
+    try {
+        String content = Files.readString(file);
+
+        Pattern p = Pattern.compile(
+            "component\\s*:\\s*(\\w+)\\s*,[\\s\\S]*?rolesAllowed\\s*:\\s*(\\[[^]]*\\])",
+            Pattern.MULTILINE
+        );
+        Matcher m = p.matcher(content);
+
+        while (m.find()) {
+            String component = m.group(1).trim();
+            String roles = m.group(2).trim();
+
+            results.add(new Result(
+                file.getFileName().toString(),   // file name
+                component,                       // assigned to (component name)
+                "rolesAllowed",                  // assignedTo always "rolesAllowed"
+                roles,                           // roles
+                "NA"                             // fullObject
+            ));
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return results;
+}
