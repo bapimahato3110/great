@@ -1,0 +1,30 @@
+private List<Result> scanMethodCalls(Path tsFile) {
+    List<Result> results = new ArrayList<>();
+    Pattern METHOD_CALL = Pattern.compile(
+            "(\\w+(?:\\.\\w+)*)\\s*\\(\\s*(\\[.*?ROLE_MBAA.*?\\])\\s*\\)",
+            Pattern.DOTALL
+    );
+
+    try {
+        List<String> lines = Files.readAllLines(tsFile);
+        for (String line : lines) {
+            line = line.trim();
+            Matcher m = METHOD_CALL.matcher(line);
+            if (m.find()) {
+                String methodName = m.group(1).trim();  // assignedTo
+                String roles = m.group(2).trim();       // roles array
+
+                results.add(new Result(
+                        tsFile.getFileName().toString(),
+                        methodName,
+                        roles,
+                        "NA"
+                ));
+            }
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+    return results;
+}
