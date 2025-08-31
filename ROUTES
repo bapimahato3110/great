@@ -32,3 +32,75 @@ private static List<Result> scanRoutesFile(Path file) {
     }
     return results;
 }
+
+
+// New code
+
+
+private static void writeHtmlReport(List<Result> componentResults, List<Result> routeResults) throws IOException {
+    String targetDir = System.getProperty("user.dir") + "/target";
+    Files.createDirectories(Paths.get(targetDir));
+    Path reportPath = Paths.get(targetDir, "rbac-scan-report.html");
+
+    StringBuilder html = new StringBuilder();
+    html.append("<!DOCTYPE html><html><head><meta charset='UTF-8'>")
+        .append("<title>RBAC Scan Report</title>")
+        .append("<style>")
+        .append("body { font-family: Arial, sans-serif; }")
+        .append(".tabs { display: flex; cursor: pointer; margin-bottom: 10px; }")
+        .append(".tab { padding: 10px; border: 1px solid #ccc; margin-right: 5px; }")
+        .append(".tab.active { background: #eee; font-weight: bold; }")
+        .append(".tab-content { display: none; }")
+        .append(".tab-content.active { display: block; }")
+        .append("table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }")
+        .append("th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }")
+        .append("</style>")
+        .append("<script>")
+        .append("function showTab(idx) {")
+        .append("document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===idx));")
+        .append("document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===idx));")
+        .append("}")
+        .append("</script>")
+        .append("</head><body>");
+
+    // Tabs header
+    html.append("<div class='tabs'>")
+        .append("<div class='tab active' onclick='showTab(0)'>Component TS Files</div>")
+        .append("<div class='tab' onclick='showTab(1)'>Route Files</div>")
+        .append("</div>");
+
+    // Tab 1: Component Results
+    html.append("<div class='tab-content active'><h2>Component TS Files</h2><table>")
+        .append("<tr><th>#</th><th>File</th><th>Assigned To</th><th>Roles</th><th>Full Object</th></tr>");
+    int i = 1;
+    for (Result r : componentResults) {
+        html.append("<tr>")
+            .append("<td>").append(i++).append("</td>")
+            .append("<td>").append(r.file()).append("</td>")
+            .append("<td>").append(r.assignedTo()).append("</td>")
+            .append("<td>").append(r.roles()).append("</td>")
+            .append("<td>").append(r.fullObject()).append("</td>")
+            .append("</tr>");
+    }
+    html.append("</table></div>");
+
+    // Tab 2: Route Results
+    html.append("<div class='tab-content'><h2>Route Files</h2><table>")
+        .append("<tr><th>#</th><th>File</th><th>Assigned To</th><th>Roles</th><th>Full Object</th></tr>");
+    i = 1;
+    for (Result r : routeResults) {
+        html.append("<tr>")
+            .append("<td>").append(i++).append("</td>")
+            .append("<td>").append(r.file()).append("</td>")
+            .append("<td>").append(r.assignedTo()).append("</td>")
+            .append("<td>").append(r.roles()).append("</td>")
+            .append("<td>").append(r.fullObject()).append("</td>")
+            .append("</tr>");
+    }
+    html.append("</table></div>");
+
+    html.append("</body></html>");
+    Files.writeString(reportPath, html.toString());
+    System.out.println("HTML Report written to " + reportPath.toAbsolutePath());
+}
+
