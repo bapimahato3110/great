@@ -1,0 +1,29 @@
+private List<Result> scanAssignmentEquals(Path tsFile) {
+    List<Result> results = new ArrayList<>();
+    Pattern ASSIGNMENT_EQUALS = Pattern.compile(
+            "(.*?)=\\s*\\[(.*?ROLE_MBAA.*?)\\]",
+            Pattern.DOTALL
+    );
+
+    try {
+        String content = Files.readString(tsFile);
+        Matcher m = ASSIGNMENT_EQUALS.matcher(content);
+
+        while (m.find()) {
+            String leftSide = m.group(1).trim();       // assignedTo
+            String roles = "[" + m.group(2).trim() + "]"; // roles array
+
+            results.add(new Result(
+                    tsFile.getFileName().toString(),  // file name
+                    leftSide,                         // assignedTo
+                    roles,                             // roles
+                    "NA"                               // fullObject not applicable
+            ));
+        }
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+    return results;
+}
