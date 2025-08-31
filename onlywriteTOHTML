@@ -1,0 +1,35 @@
+private void writeHtmlReport(List<Result> results, Path outputFile) {
+    StringBuilder html = new StringBuilder();
+    html.append("<!DOCTYPE html><html><head>")
+        .append("<meta charset='UTF-8'>")
+        .append("<title>RBAC Scan Report</title>")
+        .append("<style>")
+        .append("body { font-family: Arial, sans-serif; margin: 20px; }")
+        .append("table { border-collapse: collapse; width: 100%; }")
+        .append("th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }")
+        .append("th { background: #f4f4f4; }")
+        .append("tr:nth-child(even) { background: #f9f9f9; }")
+        .append("</style></head><body>")
+        .append("<h2>RBAC Scanner Report</h2>")
+        .append("<table><tr>")
+        .append("<th>File</th><th>Assigned To</th><th>Roles</th><th>Full Object</th>")
+        .append("</tr>");
+
+    for (Result r : results) {
+        html.append("<tr>")
+            .append("<td>").append(r.fileName()).append("</td>")
+            .append("<td>").append(r.assignedTo()).append("</td>")
+            .append("<td>").append(r.roles()).append("</td>")
+            .append("<td><pre>").append(r.fullObject()).append("</pre></td>")
+            .append("</tr>");
+    }
+
+    html.append("</table></body></html>");
+
+    try {
+        Files.writeString(outputFile, html.toString());
+        System.out.println("✅ Report generated at: " + outputFile.toAbsolutePath());
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
