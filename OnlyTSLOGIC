@@ -1,0 +1,38 @@
+private List<Result> scanAssignmentObject(Path tsFile) {
+    List<Result> results = new ArrayList<>();
+    try {
+        String content = Files.readString(tsFile);
+
+        // Regex: matches varName = { ...something with ROLE_MBAA... }
+        Pattern objectPattern = Pattern.compile(
+                "(\\w+)\\s*=\\s*\\{([^}]*ROLE_MBAA[^}]*)\\}",
+                Pattern.DOTALL
+        );
+        Matcher m = objectPattern.matcher(content);
+
+        while (m.find()) {
+            String objectName = m.group(1).trim();
+            String objectBody = m.group(2).trim();
+
+            // extract roles inside the object
+            Pattern rolesPattern = Pattern.compile("'ROLE_MBAA[^']*'");
+            Matcher rolesMatcher = rolesPattern.matcher(objectBody);
+
+            List<String> roles = new ArrayList<>();
+            while (rolesMatcher.find()) {
+                roles.add(rolesMatcher.group());
+            }
+
+            results.add(new Result(
+                    tsFile.getFileName().toString(),   // file name only
+                    objectName,                        // assignedTo
+                    roles.toString(),                  // roles
+                    "{ " + objectBody + " }"           // full object body
+            ));
+        }
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return results;
+}
