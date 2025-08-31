@@ -54,6 +54,8 @@ private static void writeHtmlReport(List<Result> componentResults, List<Result> 
         .append(".tab-content.active { display: block; }")
         .append("table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }")
         .append("th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }")
+.append("tr:nth-child(even) { background-color: #f9f9f9; }") // ✅ alternate row shading
+        .append("tr:hover { background-color: #f1f1f1; }")  
         .append("</style>")
         .append("<script>")
         .append("function showTab(idx) {")
