@@ -1,0 +1,135 @@
+import { useEffect, useState } from "react";
+import HighchartsReact from "highcharts-react-official";
+import Highcharts from "highcharts/highstock";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+interface EmissionData {
+  emission: number;
+  date: string; // "DD-MM-YYYY"
+}
+
+interface StockChartProps {
+  streamName: string;
+}
+
+const StockChart: React.FC<StockChartProps> = ({ streamName }) => {
+  const [data, setData] = useState<[number, number][]>([]);
+  const [filter, setFilter] = useState("1M"); // 1M, 3M, 6M, YTD, All
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+
+  const months = [
+    { value: 1, label: "Jan" }, { value: 2, label: "Feb" }, { value: 3, label: "Mar" },
+    { value: 4, label: "Apr" }, { value: 5, label: "May" }, { value: 6, label: "Jun" },
+    { value: 7, label: "Jul" }, { value: 8, label: "Aug" }, { value: 9, label: "Sep" },
+    { value: 10, label: "Oct" }, { value: 11, label: "Nov" }, { value: 12, label: "Dec" },
+  ];
+
+  // Adjust startDate based on filter
+  useEffect(() => {
+    const now = new Date();
+    let start: Date | null = null;
+
+    switch (filter) {
+      case "1M":
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        break;
+      case "3M":
+        start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        break;
+      case "6M":
+        start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        break;
+      case "YTD":
+        start = new Date(now.getFullYear(), 0, 1);
+        break;
+      case "All":
+        start = null;
+        break;
+    }
+    setStartDate(start);
+  }, [filter]);
+
+  // Fetch stock data
+  useEffect(() => {
+    if (!streamName) return;
+    let url = `/api/home/stream/${encodeURIComponent(streamName)}/timeseries?`;
+
+    if (startDate) url += `start=${startDate.toISOString().split("T")[0]}&`;
+    if (endDate) url += `end=${endDate.toISOString().split("T")[0]}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then((res: EmissionData[]) => {
+        const mappedData = res.map(d => {
+          const [day, month, year] = d.date.split("-").map(Number);
+          const timestamp = new Date(year, month - 1, day).getTime();
+          return [timestamp, d.emission];
+        });
+        setData(mappedData);
+      })
+      .catch(console.error);
+  }, [streamName, startDate, endDate]);
+
+  const options: Highcharts.Options = {
+    chart: { zoomType: "x" },
+    title: { text: `Emissions for ${streamName}` },
+    xAxis: {
+      type: "datetime",
+      labels: { format: "{value:%b %Y}" } // format as Jan 2023, Feb 2023...
+    },
+    yAxis: { title: { text: "Emission" } },
+    series: [{ type: "line", name: "Emission", data }],
+    tooltip: { xDateFormat: "%b %Y", valueDecimals: 2 }
+  };
+
+  return (
+    <div>
+      <h2>Stream: {streamName}</h2>
+
+      {/* Time Filters */}
+      <div style={{ marginBottom: "10px" }}>
+        {["1M", "3M", "6M", "YTD", "All"].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            style={{ marginRight: "5px", fontWeight: filter === f ? "bold" : "normal" }}
+          >
+            {f}
+          </button>
+        ))}
+
+        {/* Date Pickers */}
+        <DatePicker
+          selected={startDate}
+          onChange={date => setStartDate(date)}
+          selectsStart
+          startDate={startDate}
+          endDate={endDate}
+          dateFormat="MMM yyyy"
+          showMonthYearPicker
+        />
+        <DatePicker
+          selected={endDate}
+          onChange={date => setEndDate(date)}
+          selectsEnd
+          startDate={startDate}
+          endDate={endDate}
+          minDate={startDate}
+          dateFormat="MMM yyyy"
+          showMonthYearPicker
+        />
+      </div>
+
+      {/* Stock Chart */}
+      {data.length > 0 ? (
+        <HighchartsReact highcharts={Highcharts} constructorType={"stockChart"} options={options} />
+      ) : (
+        <p>No data available for selected period</p>
+      )}
+    </div>
+  );
+};
+
+export default StockChart;
