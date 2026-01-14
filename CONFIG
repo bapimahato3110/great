@@ -145,4 +145,86 @@ private static void writeHtmlReport(
 
 
 
-////
+////|
+
+
+
+
+private List<Result> scanNavigationMenuConfig(Path filePath) throws IOException {
+    List<Result> results = new ArrayList<>();
+    String fileName = filePath.getFileName().toString();
+
+    // --- 1. Three distinct states ---
+    String currentMenu = null;        // root menu, e.g., "instrumentManager"
+    boolean insideSubmenu = false;    // true when inside "submenu: { ... }"
+    String currentSubmenuItem = null; // actual submenu item, e.g., "riskCalculation"
+
+    // Read file line by line
+    List<String> lines = Files.readAllLines(filePath);
+
+    for (String rawLine : lines) {
+        String line = rawLine.trim();
+
+        // --- 2a. Detect root menu ---
+        if (line.matches("^\\w+: \\{$") && !line.startsWith("submenu")) {
+            currentMenu = line.substring(0, line.indexOf(":")).trim();
+            insideSubmenu = false;
+            currentSubmenuItem = null;
+            continue;
+        }
+
+        // --- 2b. Detect root block ---
+        if (line.startsWith("root: {")) {
+            currentSubmenuItem = "root";
+            insideSubmenu = false;
+            continue;
+        }
+
+        // --- 2c. Detect submenu container ---
+        if (line.startsWith("submenu: {")) {
+            insideSubmenu = true;
+            currentSubmenuItem = null; // 🔥 reset submenu item
+            continue; // do NOT treat "submenu" as a menu item
+        }
+
+        // --- 2d. Detect actual submenu items (inside submenu) ---
+        if (insideSubmenu && line.matches("^\\w+: \\{$")) {
+            currentSubmenuItem = line.substring(0, line.indexOf(":")).trim();
+            continue;
+        }
+
+        // --- 2e. Detect rolesAllowed ---
+        if (line.contains("rolesAllowed")) {
+            if (currentSubmenuItem == null) continue; // safety, skip stray rolesAllowed
+
+            String assignedTo = currentMenu + " → " + currentSubmenuItem;
+
+            // Extract roles inside [] (supports ' or ")
+            List<String> roles = new ArrayList<>();
+            Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(line);
+            if (m.find()) {
+                String roleStr = m.group(1); // inside brackets
+                // split by comma and trim quotes
+                for (String r : roleStr.split(",")) {
+                    r = r.trim().replaceAll("['\"]", "");
+                    if (!r.isEmpty()) roles.add(r);
+                }
+            }
+
+            // Add a Result entry per role
+            for (String role : roles) {
+                results.add(new Result(fileName, assignedTo, role, "submenu"));
+            }
+        }
+
+        // --- 2f. Detect end of block (optional) ---
+        if (line.equals("}")) {
+            if (insideSubmenu) {
+                currentSubmenuItem = null; // leaving current submenu item
+            }
+        }
+    }
+
+    return results;
+}
+
