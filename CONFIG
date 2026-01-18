@@ -150,81 +150,88 @@ private static void writeHtmlReport(
 
 
 
-private List<Result> scanNavigationMenuConfig(Path filePath) throws IOException {
-    List<Result> results = new ArrayList<>();
-    String fileName = filePath.getFileName().toString();
+private static void scanNavigationMenuConfig(
+        Path file,
+        List<Result> navMenuResults
+) throws IOException {
 
-    // --- 1. Three distinct states ---
-    String currentMenu = null;        // root menu, e.g., "instrumentManager"
-    boolean insideSubmenu = false;    // true when inside "submenu: { ... }"
-    String currentSubmenuItem = null; // actual submenu item, e.g., "riskCalculation"
+    String fileName = file.getFileName().toString();
 
-    // Read file line by line
-    List<String> lines = Files.readAllLines(filePath);
+    List<String> lines = Files.readAllLines(file);
 
-    for (String rawLine : lines) {
-        String line = rawLine.trim();
+    String currentRoot = null;
+    String currentItem = null;
 
-        // --- 2a. Detect root menu ---
-        if (line.matches("^\\w+: \\{$") && !line.startsWith("submenu")) {
-            currentMenu = line.substring(0, line.indexOf(":")).trim();
-            insideSubmenu = false;
-            currentSubmenuItem = null;
+    boolean inRootBlock = false;
+    boolean inSubmenuBlock = false;
+
+    for (String raw : lines) {
+        String line = raw.trim();
+
+        // -------- ROOT NAME (instrumentManager, prc, qis ...)
+        if (line.matches("^[a-zA-Z0-9_]+:\\s*\\{")) {
+            currentRoot = line.substring(0, line.indexOf(':')).trim();
+            currentItem = null;
+            inRootBlock = false;
+            inSubmenuBlock = false;
             continue;
         }
 
-        // --- 2b. Detect root block ---
-        if (line.startsWith("root: {")) {
-            currentSubmenuItem = "root";
-            insideSubmenu = false;
+        // -------- root:
+        if (line.startsWith("root:")) {
+            inRootBlock = true;
+            inSubmenuBlock = false;
+            currentItem = null;
             continue;
         }
 
-        // --- 2c. Detect submenu container ---
-        if (line.startsWith("submenu: {")) {
-            insideSubmenu = true;
-            currentSubmenuItem = null; // 🔥 reset submenu item
-            continue; // do NOT treat "submenu" as a menu item
-        }
-
-        // --- 2d. Detect actual submenu items (inside submenu) ---
-        if (insideSubmenu && line.matches("^\\w+: \\{$")) {
-            currentSubmenuItem = line.substring(0, line.indexOf(":")).trim();
+        // -------- submenu:
+        if (line.startsWith("submenu:")) {
+            inRootBlock = false;
+            inSubmenuBlock = true;
+            currentItem = null;
             continue;
         }
 
-        // --- 2e. Detect rolesAllowed ---
+        // -------- submenu item name (riskCalculation, prc, cov ...)
+        if (inSubmenuBlock && line.matches("^[a-zA-Z0-9_]+:\\s*\\{")) {
+            currentItem = line.substring(0, line.indexOf(':')).trim();
+            continue;
+        }
+
+        // -------- rolesAllowed
         if (line.contains("rolesAllowed")) {
-            if (currentSubmenuItem == null) continue; // safety, skip stray rolesAllowed
 
-            String assignedTo = currentMenu + " → " + currentSubmenuItem;
+            int start = line.indexOf('[');
+            int end = line.indexOf(']', start);
 
-            // Extract roles inside [] (supports ' or ")
-            List<String> roles = new ArrayList<>();
-            Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(line);
-            if (m.find()) {
-                String roleStr = m.group(1); // inside brackets
-                // split by comma and trim quotes
-                for (String r : roleStr.split(",")) {
-                    r = r.trim().replaceAll("['\"]", "");
-                    if (!r.isEmpty()) roles.add(r);
-                }
-            }
+            if (start == -1 || end == -1) continue;
 
-            // Add a Result entry per role
-            for (String role : roles) {
-                results.add(new Result(fileName, assignedTo, role, "submenu"));
-            }
-        }
+            String rolesPart = line.substring(start + 1, end);
 
-        // --- 2f. Detect end of block (optional) ---
-        if (line.equals("}")) {
-            if (insideSubmenu) {
-                currentSubmenuItem = null; // leaving current submenu item
+            String[] roles = rolesPart.split(",");
+
+            for (String roleRaw : roles) {
+                String role = roleRaw
+                        .replace("\"", "")
+                        .replace("'", "")
+                        .trim();
+
+                if (role.isEmpty()) continue;
+
+                String assignedTo =
+                        currentRoot + " → " +
+                        (inRootBlock ? "root" : currentItem);
+
+                navMenuResults.add(new Result(
+                        fileName,
+                        assignedTo,
+                        role,
+                        "NA"
+                ));
             }
         }
     }
-
-    return results;
 }
+
 
