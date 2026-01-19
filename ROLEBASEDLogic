@@ -1,0 +1,85 @@
+private static void scanNavigationMenuConfig(
+        Path file,
+        List<Result> results
+) throws IOException {
+
+    List<String> lines = Files.readAllLines(file);
+
+    boolean insideMenuConfig = false;
+
+    String currentMenu = null;
+    String currentSection = null;   // root | submenu
+    String currentSubmenu = null;
+
+    Pattern menuPattern = Pattern.compile("^(\\w+)\\s*:\\s*\\{$");
+    Pattern sectionPattern = Pattern.compile("^(root|submenu)\\s*:\\s*\\{$");
+    Pattern rolesPattern = Pattern.compile("rolesAllowed\\s*:\\s*\\[(.*?)]");
+
+    for (String raw : lines) {
+        String line = raw.trim();
+
+        // 1️⃣ Enter MENU_CONFIGURATION
+        if (!insideMenuConfig) {
+            if (line.contains("MENU_CONFIGURATION") && line.contains("{")) {
+                insideMenuConfig = true;
+            }
+            continue;
+        }
+
+        // 2️⃣ Menu name
+        Matcher menuMatcher = menuPattern.matcher(line);
+        if (menuMatcher.matches() && currentMenu == null) {
+            currentMenu = menuMatcher.group(1);
+            continue;
+        }
+
+        // 3️⃣ root / submenu
+        Matcher sectionMatcher = sectionPattern.matcher(line);
+        if (sectionMatcher.matches()) {
+            currentSection = sectionMatcher.group(1);
+            continue;
+        }
+
+        // 4️⃣ Submenu name
+        if ("submenu".equals(currentSection)) {
+            Matcher subMatcher = menuPattern.matcher(line);
+            if (subMatcher.matches()) {
+                currentSubmenu = subMatcher.group(1);
+                continue;
+            }
+        }
+
+        // 5️⃣ rolesAllowed
+        Matcher rolesMatcher = rolesPattern.matcher(line);
+        if (rolesMatcher.find()) {
+            String roles = rolesMatcher.group(1);
+
+            String assignedTo;
+            if ("root".equals(currentSection)) {
+                assignedTo = currentMenu + " → root";
+            } else {
+                assignedTo = currentMenu + " → " + currentSubmenu;
+            }
+
+            for (String role : roles.split(",")) {
+                results.add(new Result(
+                        file.getFileName().toString(),
+                        assignedTo,
+                        role.replace("\"", "").trim(),
+                        "NA"
+                ));
+            }
+        }
+
+        // 6️⃣ Exit blocks
+        if (line.equals("}")) {
+            if (currentSubmenu != null) {
+                currentSubmenu = null;
+            } else if (currentSection != null) {
+                currentSection = null;
+            } else if (currentMenu != null) {
+                currentMenu = null;
+            }
+        }
+    }
+}
