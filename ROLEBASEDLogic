@@ -118,3 +118,34 @@ private static void scanNavigationMenuConfig(Path file, List<Result> results) th
         }
     }
 }
+
+
+
+
+//// 
+List<Result> fixedList = new ArrayList<>();
+AtomicReference<String> lastRoot = new AtomicReference<>();
+
+fixedList = navMenuResults.stream()
+        .map(r -> {
+            String assigned = r.assignedTo();
+
+            if (assigned.endsWith("→ root")) {
+                // root entry, update lastRoot
+                String rootName = assigned.split("→")[0].trim();
+                lastRoot.set(rootName);
+                return r;
+            } else if (assigned.endsWith("→ null") || assigned.contains("→ submenu")) {
+                // submenu item, fix left side
+                String rightSide = assigned.split("→")[1].trim();
+                String newAssignedTo = lastRoot.get() != null
+                        ? lastRoot.get() + " → " + rightSide
+                        : assigned; // fallback if no root seen yet
+                return new Result(r.fileName(), newAssignedTo, r.roles(), r.objectName());
+            } else {
+                // other entries untouched
+                return r;
+            }
+        })
+        .collect(Collectors.toList());
+
