@@ -1,84 +1,119 @@
-private static void scanNavigationMenuConfig(
-        Path file,
-        List<Result> results
-) throws IOException {
+private static void scanNavigationMenuConfig(Path file, List<Result> results) throws IOException {
 
-    List<String> lines = Files.readAllLines(file);
+    Pattern menuConfigStart =
+            Pattern.compile("MENU_CONFIGURATION\\s*=\\s*\\{");
+
+    Pattern menuPattern =
+            Pattern.compile("^\\s*([a-zA-Z0-9_]+)\\s*:\\s*\\{");
+
+    Pattern rootPattern =
+            Pattern.compile("^\\s*root\\s*:\\s*\\{");
+
+    Pattern submenuBlockPattern =
+            Pattern.compile("^\\s*submenu\\s*:\\s*\\{");
+
+    Pattern submenuItemPattern =
+            Pattern.compile("^\\s*([a-zA-Z0-9_]+)\\s*:\\s*\\{");
+
+    Pattern rolesPattern =
+            Pattern.compile("rolesAllowed\\s*:\\s*\\[(.*?)\\]");
 
     boolean insideMenuConfig = false;
 
     String currentMenu = null;
-    String currentSection = null;   // root | submenu
+    String currentSection = null;
     String currentSubmenu = null;
 
-    Pattern menuPattern = Pattern.compile("^(\\w+)\\s*:\\s*\\{$");
-    Pattern sectionPattern = Pattern.compile("^(root|submenu)\\s*:\\s*\\{$");
-    Pattern rolesPattern = Pattern.compile("rolesAllowed\\s*:\\s*\\[(.*?)]");
+    int braceDepth = 0;
+    int menuConfigDepth = -1;
 
-    for (String raw : lines) {
-        String line = raw.trim();
+    List<String> lines = Files.readAllLines(file);
 
-        // 1️⃣ Enter MENU_CONFIGURATION
+    for (String line : lines) {
+
+        // --- detect MENU_CONFIGURATION start ---
         if (!insideMenuConfig) {
-            if (line.contains("MENU_CONFIGURATION") && line.contains("{")) {
+            if (menuConfigStart.matcher(line).find()) {
                 insideMenuConfig = true;
+                menuConfigDepth = braceDepth;
             }
+        }
+
+        // count braces AFTER detection
+        braceDepth += countChar(line, '{');
+        braceDepth -= countChar(line, '}');
+
+        // --- exit MENU_CONFIGURATION ---
+        if (insideMenuConfig && braceDepth <= menuConfigDepth) {
+            insideMenuConfig = false;
+            currentMenu = null;
+            currentSection = null;
+            currentSubmenu = null;
             continue;
         }
 
-        // 2️⃣ Menu name
+        if (!insideMenuConfig) {
+            continue;
+        }
+
+        // --- menu name (instrumentManager / prc / qis) ---
         Matcher menuMatcher = menuPattern.matcher(line);
-        if (menuMatcher.matches() && currentMenu == null) {
+        if (menuMatcher.matches()
+                && !"root".equals(menuMatcher.group(1))
+                && !"submenu".equals(menuMatcher.group(1))) {
+
             currentMenu = menuMatcher.group(1);
+            currentSection = null;
+            currentSubmenu = null;
             continue;
         }
 
-        // 3️⃣ root / submenu
-        Matcher sectionMatcher = sectionPattern.matcher(line);
-        if (sectionMatcher.matches()) {
-            currentSection = sectionMatcher.group(1);
+        // --- root ---
+        if (rootPattern.matcher(line).matches()) {
+            currentSection = "root";
+            currentSubmenu = null;
             continue;
         }
 
-        // 4️⃣ Submenu name
+        // --- submenu block ---
+        if (submenuBlockPattern.matcher(line).matches()) {
+            currentSection = "submenu";
+            continue;
+        }
+
+        // --- submenu item ---
         if ("submenu".equals(currentSection)) {
-            Matcher subMatcher = menuPattern.matcher(line);
+            Matcher subMatcher = submenuItemPattern.matcher(line);
             if (subMatcher.matches()) {
                 currentSubmenu = subMatcher.group(1);
                 continue;
             }
         }
 
-        // 5️⃣ rolesAllowed
+        // --- rolesAllowed ---
         Matcher rolesMatcher = rolesPattern.matcher(line);
-        if (rolesMatcher.find()) {
-            String roles = rolesMatcher.group(1);
+        if (rolesMatcher.find() && currentMenu != null) {
 
-            String assignedTo;
-            if ("root".equals(currentSection)) {
-                assignedTo = currentMenu + " → root";
-            } else {
-                assignedTo = currentMenu + " → " + currentSubmenu;
-            }
+            String[] roles = rolesMatcher.group(1)
+                    .replace("\"", "")
+                    .split(",");
 
-            for (String role : roles.split(",")) {
+            for (String role : roles) {
+                role = role.trim();
+
+                String assignedTo;
+                if ("root".equals(currentSection)) {
+                    assignedTo = currentMenu + " → root";
+                } else {
+                    assignedTo = currentMenu + " → " + currentSubmenu;
+                }
+
                 results.add(new Result(
                         file.getFileName().toString(),
                         assignedTo,
-                        role.replace("\"", "").trim(),
+                        role,
                         "NA"
                 ));
-            }
-        }
-
-        // 6️⃣ Exit blocks
-        if (line.equals("}")) {
-            if (currentSubmenu != null) {
-                currentSubmenu = null;
-            } else if (currentSection != null) {
-                currentSection = null;
-            } else if (currentMenu != null) {
-                currentMenu = null;
             }
         }
     }
