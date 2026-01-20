@@ -1,0 +1,153 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class AppRoutesScanner {
+
+    /**
+     * Builds Result list for app.routes.ts
+     *
+     * @param appRoutesFile   path to app.routes.ts
+     * @param navMenuResults  normalized results from NavigationMenuConfig
+     * @return List<Result> for routes
+     */
+    public static List<Result> buildAppRoutesResults(
+            Path appRoutesFile,
+            List<Result> navMenuResults
+    ) throws IOException {
+
+        List<Result> results = new ArrayList<>();
+        String fileName = appRoutesFile.getFileName().toString();
+
+        // ------------------------------------------------------------
+        // Build lookup:  "rootMenu → submenu|root"  -> roles
+        // ------------------------------------------------------------
+        Map<String, Set<String>> menuRoleLookup = new HashMap<>();
+
+        for (Result r : navMenuResults) {
+            menuRoleLookup
+                    .computeIfAbsent(r.assignedTo(), k -> new LinkedHashSet<>())
+                    .add(r.roles());
+        }
+
+        List<String> lines = Files.readAllLines(appRoutesFile);
+
+        String currentPath = null;
+
+        for (String rawLine : lines) {
+            String line = rawLine.trim();
+
+            // ----------------- PATH -----------------
+            if (line.startsWith("path:")) {
+                currentPath = extractQuotedValue(line);
+                continue;
+            }
+
+            // ---------------- ROLES -----------------
+            if (!line.contains("rolesAllowed")) {
+                continue;
+            }
+
+            // -------- Case 1: inline roles ----------
+            if (line.contains("[") && line.contains("]")) {
+                List<String> roles = extractRolesFromArray(line);
+
+                for (String role : roles) {
+                    results.add(new Result(
+                            fileName,
+                            currentPath,
+                            role,
+                            "NA"
+                    ));
+                }
+            }
+
+            // ---- Case 2: MENU_CONFIGURATION ref ----
+            else if (line.contains("MENU_CONFIGURATION")) {
+
+                String assignedMenu = resolveAssignedToFromMenuReference(line);
+                Set<String> roles = menuRoleLookup.getOrDefault(
+                        assignedMenu,
+                        Collections.emptySet()
+                );
+
+                for (String role : roles) {
+                    results.add(new Result(
+                            fileName,
+                            currentPath,
+                            role,
+                            "NA"
+                    ));
+                }
+            }
+        }
+
+        return results;
+    }
+
+    // ============================================================
+    // ===================== HELPERS =============================
+    // ============================================================
+
+    private static String extractQuotedValue(String line) {
+        int first = line.indexOf('\'');
+        int last = line.lastIndexOf('\'');
+        if (first >= 0 && last > first) {
+            return line.substring(first + 1, last);
+        }
+        return null;
+    }
+
+    private static List<String> extractRolesFromArray(String line) {
+        int start = line.indexOf('[');
+        int end = line.indexOf(']');
+        if (start < 0 || end < 0 || end <= start) {
+            return List.of();
+        }
+
+        String inside = line.substring(start + 1, end);
+
+        return Arrays.stream(inside.split(","))
+                .map(String::trim)
+                .map(r -> r.replace("\"", "").replace("'", ""))
+                .filter(r -> !r.isBlank())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Resolves:
+     * Navigation.MENU_CONFIGURATION.instrumentManager.root.rolesAllowed
+     * Navigation.MENU_CONFIGURATION.prc.submenu.cov.rolesAllowed
+     *
+     * into:
+     * instrumentManager → root
+     * prc → cov
+     */
+    private static String resolveAssignedToFromMenuReference(String line) {
+
+        String ref = line.substring(line.indexOf("MENU_CONFIGURATION"))
+                .replace("rolesAllowed", "")
+                .replace(";", "")
+                .trim();
+
+        String[] parts = ref.split("\\.");
+
+        String rootMenu = null;
+        String submenu = null;
+
+        for (int i = 0; i < parts.length; i++) {
+            if ("MENU_CONFIGURATION".equals(parts[i]) && i + 1 < parts.length) {
+                rootMenu = parts[i + 1];
+            }
+            if ("submenu".equals(parts[i]) && i + 1 < parts.length) {
+                submenu = parts[i + 1];
+            }
+        }
+
+        return (submenu != null)
+                ? rootMenu + " → " + submenu
+                : rootMenu + " → root";
+    }
+}
