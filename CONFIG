@@ -234,4 +234,30 @@ private static void scanNavigationMenuConfig(
     }
 }
 
+/////for normalizing
+private static List<Result> normalizeTsOrHtmlResults(List<Result> inputList) {
+    List<Result> normalized = new ArrayList<>();
+
+    for (Result r : inputList) {
+        if (r.roles() == null || r.roles().isEmpty()) {
+            continue;
+        }
+
+        // Clean up roles string: remove brackets, quotes, spaces
+        String cleaned = r.roles().replaceAll("[\\[\\]'\" ]", ""); // e.g., ROLE_SUPPORT,ROLE_LEAP
+        String[] individualRoles = cleaned.split(",");
+
+        // Create a new Result for each role
+        for (String role : individualRoles) {
+            normalized.add(new Result(
+                    r.fileName(),                     // keep filename
+                    r.fileName() + " -> " + r.assignedTo(), // new assignedTo
+                    role,                             // single role
+                    r.objectName()                    // keep objectName
+            ));
+        }
+    }
+
+    return normalized;
+}
 
