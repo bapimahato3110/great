@@ -261,3 +261,34 @@ private static List<Result> normalizeTsOrHtmlResults(List<Result> inputList) {
     return normalized;
 }
 
+////// javascript for button
+private static ScriptTag exportToExcelScript() {
+    return script(
+        rawHtml("""
+            function exportTableToExcel(tableId, filename) {
+                const table = document.getElementById(tableId);
+                let csv = [];
+
+                for (let row of table.rows) {
+                    let cols = [];
+                    for (let cell of row.cells) {
+                        let text = cell.innerText.replace(/"/g, '""');
+                        cols.push("\\"" + text + "\\"");
+                    }
+                    csv.push(cols.join(","));
+                }
+
+                const csvFile = new Blob([csv.join("\\n")], { type: "text/csv" });
+                const downloadLink = document.createElement("a");
+
+                downloadLink.download = filename + ".csv";
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = "none";
+
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }
+        """)
+    );
+}
