@@ -292,3 +292,52 @@ private static ScriptTag exportToExcelScript() {
         """)
     );
 }
+///// filter method
+
+private static ScriptTag tableScripts() {
+    return script(
+        rawHtml("""
+            function exportTableToExcel() {
+                const table = document.getElementById("resultsTable");
+                const html = table.outerHTML.replace(/ /g, '%20');
+                const url = 'data:application/vnd.ms-excel,' + html;
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'access-report.xls';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+
+            let sortDirections = {};
+
+            function sortTable(colIndex) {
+                const table = document.getElementById("resultsTable");
+                const tbody = table.tBodies[0];
+                const rows = Array.from(tbody.rows);
+
+                const asc = sortDirections[colIndex] = !sortDirections[colIndex];
+
+                rows.sort((a, b) => {
+                    let x = a.cells[colIndex].innerText.trim();
+                    let y = b.cells[colIndex].innerText.trim();
+
+                    const xNum = parseFloat(x);
+                    const yNum = parseFloat(y);
+
+                    if (!isNaN(xNum) && !isNaN(yNum)) {
+                        return asc ? xNum - yNum : yNum - xNum;
+                    }
+
+                    return asc
+                        ? x.localeCompare(y, undefined, { sensitivity: 'base' })
+                        : y.localeCompare(x, undefined, { sensitivity: 'base' });
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
+            }
+        """)
+    );
+}
+
