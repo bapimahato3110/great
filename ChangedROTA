@@ -1,0 +1,87 @@
+// ---------------------------------------------
+// Parse .properties text into usecases array
+// ---------------------------------------------
+function parseUsecasesFromProperties(propertiesText) {
+    const usecaseMap = {};
+
+    const lines = propertiesText
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith("##")); // ignore full comments if needed
+
+    for (const line of lines) {
+        // Split only on first '='
+        const eqIndex = line.indexOf("=");
+        if (eqIndex === -1) continue;
+
+        const key = line.substring(0, eqIndex);
+        const value = line.substring(eqIndex + 1);
+
+        // Match usecases[index].field
+        const match = key.match(/^usecases\[(\d+)]\.(.+)$/);
+        if (!match) continue;
+
+        const index = Number(match[1]);
+        const field = match[2];
+
+        if (!usecaseMap[index]) {
+            usecaseMap[index] = {};
+        }
+
+        usecaseMap[index][field] = value;
+    }
+
+    // Convert map → ordered array
+    return Object.keys(usecaseMap)
+        .sort((a, b) => a - b)
+        .map(i => ({
+            name: usecaseMap[i].name || "",
+            tag: usecaseMap[i].tag || "",
+            prodVars: usecaseMap[i].prodVars || "",
+            preprodVars: usecaseMap[i].preprodVars || ""
+        }));
+}
+
+// ---------------------------------------------
+// Render usecases into textarea
+// - If name starts with '#': raw line
+// - Else: CSV row
+// ---------------------------------------------
+function renderUsecasesToTextarea(usecases, textareaId) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+
+    const lines = usecases.map(u => {
+        // Raw/comment line
+        if (u.name && u.name.trim().startsWith("#")) {
+            return u.name;
+        }
+
+        // Normal CSV row
+        return [
+            u.name,
+            u.tag,
+            u.prodVars,
+            u.preprodVars
+        ].join(",");
+    });
+
+    textarea.value = lines.join("\n");
+}
+
+// ---------------------------------------------
+// INIT (script is at end of <body>)
+// ---------------------------------------------
+(function init() {
+    if (typeof USECASES_RAW === "undefined") {
+        console.error("USECASES_RAW not found");
+        return;
+    }
+
+    const usecasesArray = parseUsecasesFromProperties(USECASES_RAW);
+
+    // Debug (optional)
+    console.log("Parsed usecases array:", usecasesArray);
+
+    renderUsecasesToTextarea(usecasesArray, "usecaseText");
+})();
